@@ -16,13 +16,10 @@
 
 package io.dingodb.raft.rpc.impl.cli;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import io.dingodb.net.Tag;
 import io.dingodb.raft.entity.PeerId;
 import io.dingodb.raft.rpc.CliRequests;
 import io.dingodb.raft.rpc.RpcRequestClosure;
-import io.dingodb.net.RaftTag;
 
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -66,26 +63,7 @@ public class GetPeersRequestProcessor extends BaseCliRequestProcessor<CliRequest
     }
 
     @Override
-    public CliRequests.GetPeersRequest parse(byte[] request) {
-        try {
-            return CliRequests.GetPeersRequest.parseFrom(request);
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     public String interest() {
         return CliRequests.GetPeersRequest.class.getName();
-    }
-
-    @Override
-    public Tag getRequestTag() {
-        return RaftTag.GETPEERS_REQUEST;
-    }
-
-    @Override
-    public Tag getResponseTag() {
-        return RaftTag.GETPEERS_RESPONSE;
     }
 }

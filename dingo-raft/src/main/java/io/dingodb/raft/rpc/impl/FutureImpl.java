@@ -16,8 +16,6 @@
 
 package io.dingodb.raft.rpc.impl;
 
-import io.dingodb.net.Channel;
-
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -37,20 +35,13 @@ public class FutureImpl<R> implements Future<R> {
     protected boolean isCancelled;
     protected Throwable failure;
 
-    protected Channel channel;
-
     protected R result;
 
     public FutureImpl() {
-        this(null, new ReentrantLock());
+        this(new ReentrantLock());
     }
 
-    public FutureImpl(Channel channel) {
-        this(channel, new ReentrantLock());
-    }
-
-    public FutureImpl(Channel channel, ReentrantLock lock) {
-        this.channel = channel;
+    public FutureImpl(ReentrantLock lock) {
         this.lock = lock;
         this.latch = new CountDownLatch(1);
     }
@@ -106,7 +97,6 @@ public class FutureImpl<R> implements Future<R> {
             return true;
         } finally {
             this.lock.unlock();
-            closeChannel();
         }
     }
 
@@ -153,7 +143,6 @@ public class FutureImpl<R> implements Future<R> {
             return this.result;
         } finally {
             this.lock.unlock();
-            closeChannel();
         }
     }
 
@@ -179,7 +168,6 @@ public class FutureImpl<R> implements Future<R> {
             }
         } finally {
             this.lock.unlock();
-            closeChannel();
         }
     }
 
@@ -203,15 +191,5 @@ public class FutureImpl<R> implements Future<R> {
     protected void notifyHaveResult() {
         this.isDone = true;
         this.latch.countDown();
-    }
-
-    private void closeChannel() {
-        if (this.channel != null) {
-            try {
-                channel.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

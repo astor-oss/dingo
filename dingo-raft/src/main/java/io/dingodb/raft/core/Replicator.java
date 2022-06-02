@@ -64,6 +64,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
 // Refer to SOFAJRaft: <A>https://github.com/sofastack/sofa-jraft/<A/>
 @ThreadSafe
 public class Replicator implements ThreadId.OnError {
@@ -602,7 +604,7 @@ public class Replicator implements ThreadId.OnError {
             return;
         }
         boolean doUnlock = true;
-        if (!this.rpcService.checkConnection(this.options.getPeerId().getEndpoint(), false)) {
+        if (!this.rpcService.connect(this.options.getPeerId().getEndpoint())) {
             LOG.error("Fail to check install snapshot connection to peer={}, give up to send install snapshot request.", options.getPeerId().getEndpoint());
             block(Utils.nowMs(), RaftError.EHOSTDOWN.getNumber());
             return;
@@ -801,6 +803,7 @@ public class Replicator implements ThreadId.OnError {
                         }
 
                     });
+
                 addInflight(RequestType.AppendEntries, this.nextIndex, 0, 0, seq, rpcFuture);
             }
             LOG.debug("Node {} send HeartbeatRequest to {} term {} lastCommittedIndex {}", this.options.getNode()
@@ -867,7 +870,7 @@ public class Replicator implements ThreadId.OnError {
             throw new IllegalArgumentException("Invalid ReplicatorOptions.");
         }
         final Replicator r = new Replicator(opts, raftOptions);
-        if (!r.rpcService.checkConnection(opts.getPeerId().getEndpoint(), false)) {
+        if (!r.rpcService.connect(opts.getPeerId().getEndpoint())) {
             LOG.error("Fail to init sending channel to {}.", opts.getPeerId());
             // Return and it will be retried later.
             return null;

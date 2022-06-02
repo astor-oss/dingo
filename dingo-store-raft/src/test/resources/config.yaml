@@ -1,6 +1,6 @@
 exchange:
     host: localhost
-    port: 19999
+    port: 0
 store:
     raft:
-        collectStatsInterval: 5
+        port: 19999

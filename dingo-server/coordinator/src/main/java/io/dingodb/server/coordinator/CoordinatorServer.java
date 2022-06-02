@@ -73,7 +73,7 @@ public class CoordinatorServer {
             Paths.get(configuration.getDataPath(), "db").toString(), configuration.getRocks()
         );
 
-        Endpoint endpoint = new Endpoint(DingoConfiguration.host(), DingoConfiguration.port());
+        Endpoint endpoint = new Endpoint(DingoConfiguration.host(), configuration.getRaft().getPort());
         RpcServer rpcServer = RaftRpcServerFactory.createRaftRpcServer(endpoint);
         rpcServer.init(null);
         NodeManager.getInstance().addAddress(endpoint);

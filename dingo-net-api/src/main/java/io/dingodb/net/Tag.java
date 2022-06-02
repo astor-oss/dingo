@@ -26,5 +26,4 @@ public interface Tag {
         Tag get();
     }
 
-    int flag();
 }
