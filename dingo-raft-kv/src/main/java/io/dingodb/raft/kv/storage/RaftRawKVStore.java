@@ -135,12 +135,6 @@ public class RaftRawKVStore implements Lifecycle<Void> {
         return this.kvStore.scan(startKey, endKey);
     }
 
-    protected SeekableIterator<byte[], ByteArrayEntry> localScan(
-        final byte[] startKey, final byte[] endKey, boolean includeStart, boolean includeEnd
-    ) {
-        return this.kvStore.scan(startKey, endKey, includeStart, includeEnd);
-    }
-
     protected long localCount(final byte[] startKey, final byte[] endKey) {
         return this.kvStore.count(startKey, endKey);
     }
@@ -215,12 +209,6 @@ public class RaftRawKVStore implements Lifecycle<Void> {
         return read(RaftRawKVOperation.scan(startKey, endKey));
     }
 
-    public CompletableFuture<SeekableIterator<byte[], ByteArrayEntry>> scan(
-        byte[] startKey, byte[] endKey, boolean includeStart, boolean includeEnd
-    ) {
-        return read(RaftRawKVOperation.scan(startKey, endKey, includeStart, includeEnd));
-    }
-
     public CompletableFuture<Boolean> put(byte[] key, byte[] value) {
         return write(RaftRawKVOperation.put(key, value));
     }
@@ -270,10 +258,7 @@ public class RaftRawKVStore implements Lifecycle<Void> {
             case SCAN:
                 return localScan(
                     operation.getKey(),
-                    operation.getExtKey(),
-                    cleanNull(operation.ext1(), true),
-                    cleanNull(operation.ext2(), false)
-                );
+                    operation.getExtKey());
             case COUNT:
                 return localCount(operation.getKey(), operation.getExtKey());
             case CONTAINS_KEY:

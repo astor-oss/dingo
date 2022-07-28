@@ -152,6 +152,12 @@ public class DingoExampleUsingSDK {
                 for (Object r : record) {
                     stringResult += r.toString();
                 }
+                if (stringResult.length() == 0) {
+                    System.out.println("=============Huzx:=========Record Not Exist: " + Arrays.toString(key));
+                } else {
+                    stringResult.substring(0, stringResult.length() - 1);
+                    System.out.println(">>>>>>Huzx:>>>>>>Record Exist: " + Arrays.toString(key) + ": " + stringResult);
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }

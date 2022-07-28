@@ -31,7 +31,7 @@ public class TestDingoCodec {
 
     private static KeyValueCodec codec;
 
-    private Object[] record = new Object[] {1, "name", 0.5d};
+    private Object[] record = new Object[] {910001, "name1", "name2"};
 
     @BeforeAll
     public static void setupAll() throws IOException {

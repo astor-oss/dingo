@@ -671,7 +671,10 @@ public class DingoJobVisitor implements DingoRelVisitor<Collection<Output>> {
         CommonId tableId = this.metaCache.getTableId(tableName);
         TableDefinition td = this.metaCache.getTableDefinition(tableName);
         NavigableMap<ComparableByteArray, Part> parts = this.metaCache.getParts(tableName);
-        List<Location> distributeNodes = this.metaCache.getDistributes(tableName);
+        List<Location> distributeNodes = parts.values().stream()
+            .map(Part::getLeader)
+            .distinct()
+            .collect(Collectors.toList());
 
         List<Output> outputs = new ArrayList<>(distributeNodes.size());
         Map<Location, List<String>> groupAllPartKeysByAddress = groupAllPartKeysByAddress(parts);

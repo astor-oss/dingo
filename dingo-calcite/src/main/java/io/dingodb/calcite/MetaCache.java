@@ -98,11 +98,13 @@ public class MetaCache {
     }
 
     public NavigableMap<ByteArrayUtils.ComparableByteArray, Part> getParts(final String tableName) {
+        /*
         if (this.tablePartMap.containsKey(tableName)) {
             return this.tablePartMap.get(tableName);
         }
+        */
         NavigableMap<ByteArrayUtils.ComparableByteArray, Part> mp = metaService.getParts(tableName);
-        this.tablePartMap.put(tableName, mp);
+        // this.tablePartMap.put(tableName, mp);
         return mp;
     }
 

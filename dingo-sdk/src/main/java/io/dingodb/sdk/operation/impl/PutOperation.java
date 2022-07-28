@@ -50,10 +50,11 @@ public class PutOperation implements IStoreOperation {
                 return new ResultForStore(false, errorMsg);
             }
             List<KeyValue> keyValueList = parameters.getRecordList();
+            System.out.println("Huzx==> insert keyValueList size: " + keyValueList.size() + " tableId: " + tableId);
             boolean isSuccess = executorApi.upsertKeyValue(tableId, keyValueList);
             return new ResultForStore(isSuccess, "OK");
         } catch (Exception e) {
-            log.error("delete table:{} by KeyValue catch exception:{}", tableId, e.toString(), e);
+            log.error("put table:{} by KeyValue catch exception:{}", tableId, e.toString(), e);
             throw e;
         }
     }

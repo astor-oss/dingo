@@ -154,7 +154,8 @@ public class DingoMetaService implements MetaService, MetaServiceApi {
 
     @Override
     public Map<String, TableDefinition> getTableDefinitions() {
-        return ((TableAdaptor) getMetaAdaptor(Table.class)).getAllDefinition();
+        Map<String, TableDefinition> result = ((TableAdaptor) getMetaAdaptor(Table.class)).getAllDefinition();
+        return result;
     }
 
     @Override

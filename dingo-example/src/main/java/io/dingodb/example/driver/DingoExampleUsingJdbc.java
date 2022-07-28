@@ -144,17 +144,19 @@ public class DingoExampleUsingJdbc {
         String initStr = "insert into " + tableName + " values ";
         String midStr = initStr;
         for (long i = startKey; i < recordCnt + 1; i++) {
-            String row = "(" + i + ","
-                + padLeftZeros(String.valueOf(i), 10) + ","
-                + getRandomInt(10, 30) + ","
-                + getRandomDouble(10, 30) + "),";
+            String row = "(" + Long.valueOf(i).intValue() + ","
+                 + String.valueOf(i) + ","
+                + String.valueOf(i) + "),";
             midStr += row;
             if (i % batchCnt == 0 || i == recordCnt) {
                 midStr = midStr.substring(0, midStr.length() - 1);
-                int count = statement.executeUpdate(midStr);
-                if (count != batchCnt) {
-                    System.out.println("Insert Record Failed: Index:" + i + ",RealCnt:" + count);
-                }
+                int count = 0;
+                do {
+                    count = statement.executeUpdate(midStr);
+                    if (count != batchCnt) {
+                        System.out.println("Insert Record Failed: Index:" + i + ",RealCnt:" + count);
+                    }
+                } while (count != batchCnt);
                 midStr = initStr;
             }
         }

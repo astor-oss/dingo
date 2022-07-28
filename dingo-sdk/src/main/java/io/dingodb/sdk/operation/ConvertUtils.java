@@ -86,6 +86,8 @@ public final class ConvertUtils {
                 try {
                     Object[] columnValues = x.getColumnValuesInOrder().toArray();
                     KeyValue keyValue = codec.encode(columnValues);
+                    System.out.println("Huzx---------->" + Arrays.toString(columnValues)
+                        + ",Key:" + Arrays.toString(keyValue.getKey()));
                     return keyValue;
                 } catch (IOException e) {
                     throw new RuntimeException(e);
