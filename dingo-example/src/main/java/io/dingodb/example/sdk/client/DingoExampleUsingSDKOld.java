@@ -18,16 +18,16 @@ package io.dingodb.example.sdk.client;
 
 import io.dingodb.common.config.DingoConfiguration;
 import io.dingodb.sdk.client.DingoClient;
+import io.dingodb.sdk.client.DingoOldClient;
 import io.dingodb.server.client.config.ClientConfiguration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-public class DingoExampleUsingSDK {
-    private static DingoClient dingoClient;
+public class DingoExampleUsingSDKOld {
+    private static DingoOldClient dingoClient;
     private static int  insertBatchCnt = 1000;
     private static int  insertTotalCnt = 20000;
 
@@ -66,12 +66,7 @@ public class DingoExampleUsingSDK {
 
         DingoConfiguration.parse(coordinatorCfg);
         String coordinatorServerList = ClientConfiguration.instance().getCoordinatorExchangeSvrList();
-        dingoClient = new DingoClient(coordinatorServerList);
-        boolean isOK = dingoClient.openConnection();
-        if (!isOK) {
-            System.out.println("Failed to open connection");
-            return;
-        }
+        dingoClient = new DingoOldClient(coordinatorServerList, "HUZX");
 
         long startTime = System.currentTimeMillis();
         switch (cmd) {
@@ -104,9 +99,8 @@ public class DingoExampleUsingSDK {
     public static void insert(String tableName) throws Exception {
         for (int i = 0; i < insertTotalCnt; i++) {
             String uuid = UUID.randomUUID().toString();
-            Object[] record = new Object[]{i, "k-" + i, "v-" + uuid};
-            dingoClient.insert(tableName, record);
-            Thread.sleep(1000);
+            Object[] record = new Object[]{i, "k-" + uuid, "v-" + uuid};
+            dingoClient.insert(record);
         }
     }
 
@@ -122,12 +116,12 @@ public class DingoExampleUsingSDK {
                     String uuid = UUID.randomUUID().toString();
                     Object[] record = new Object[] {
                         Long.valueOf(totalRealInsertCnt).intValue(),
-                        "k-" + totalRealInsertCnt,
-                        "v-" + totalRealInsertCnt };
+                        "k-" + uuid,
+                        "v-" + uuid };
                     records.add(record);
                     totalRealInsertCnt++;
                 }
-                boolean isOK = dingoClient.insert(tableName, records);
+                boolean isOK = dingoClient.insert(records);
                 long totalTimeCost = System.currentTimeMillis() - startTime;
                 System.out.println("inserted record: " + totalRealInsertCnt
                     + ", TotalCost: " + totalTimeCost + "ms"
@@ -149,7 +143,7 @@ public class DingoExampleUsingSDK {
             startTime = System.currentTimeMillis();
             Object[] key = new Object[]{i};
             try {
-                Object[] record = dingoClient.get(tableName, key);
+                Object[] record = dingoClient.get(key);
                 for (Object r : record) {
                     stringResult += r.toString();
                 }
@@ -181,7 +175,7 @@ public class DingoExampleUsingSDK {
     public static void delete(String tableName) throws Exception {
         for (int i = 0; i < insertTotalCnt; i++) {
             Object[] key = new Object[]{i};
-            dingoClient.delete(tableName, key);
+            dingoClient.delete(key);
         }
     }
 }

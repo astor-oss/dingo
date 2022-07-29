@@ -30,6 +30,7 @@ import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.ConfigOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.EnvOptions;
+import org.rocksdb.FlushOptions;
 import org.rocksdb.Options;
 import org.rocksdb.OptionsUtil;
 import org.rocksdb.ReadOptions;
@@ -239,11 +240,19 @@ public class RocksRawKVStore implements RawKVStore {
     public long count(byte[] startKey, byte[] endKey) {
         long count = 0;
         try (
-            // ReadOptions readOptions = new ReadOptions();
-            // Snapshot snapshot = this.db.getSnapshot();
-            // RocksIterator iterator = db.newIterator(readOptions.setSnapshot(snapshot))
-            RocksIterator iterator = db.newIterator()
+             ReadOptions readOptions = new ReadOptions();
+             Snapshot snapshot = this.db.getSnapshot();
+             RocksIterator iterator = db.newIterator(readOptions.setSnapshot(snapshot))
         ) {
+            /*
+            try {
+                db.flush(new FlushOptions());
+            } catch (RocksDBException e) {
+                log.warn("RocksRawKVStore flush exception: {}", e);
+            }
+            */
+
+
             if (startKey == null) {
                 iterator.seekToFirst();
             } else {

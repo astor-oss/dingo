@@ -258,7 +258,7 @@ public class PartStateMachine extends DefaultRaftRawKVStoreStateMachine {
                 if (count > 0) {
                     approximateStats.add(new ApproximateStats(startKey, endKey, count, size));
                     log.info("Huzx=>part:{} Approximate stats: total count:{} subCnt:{}. size:{}",
-                        part.getId(),
+                        part,
                         totalCnt,
                         count,
                         size);

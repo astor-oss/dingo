@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -259,8 +260,15 @@ public class RaftRawKVStore implements Lifecycle<Void> {
                 return localScan(
                     operation.getKey(),
                     operation.getExtKey());
-            case COUNT:
-                return localCount(operation.getKey(), operation.getExtKey());
+            case COUNT: {
+                long count = localCount(operation.getKey(), operation.getExtKey());
+                log.info("Huzx=> countUsingSQL: key: {}, startKey: {}, endKey: {}, count: {}",
+                    Arrays.toString(operation.getKey()),
+                    Arrays.toString(operation.getKey()),
+                    Arrays.toString(operation.getExtKey()),
+                    count);
+                return count;
+            }
             case CONTAINS_KEY:
                 return localContainsKey(operation.getKey());
             case SNAPSHOT_SAVE:

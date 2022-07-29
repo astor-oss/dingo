@@ -34,6 +34,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -124,6 +125,11 @@ public final class RaftStoreInstancePart implements StoreInstance {
         if (!stateMachine.isEnable()) {
             throw new UnsupportedOperationException("State machine not available");
         }
+        log.info("Upsert key value, id: {}, part: {}, key: {}",
+            id.toString(),
+            part,
+            row.getPrimaryKey() == null ? "null" : Arrays.toString(row.getPrimaryKey())
+        );
         return raftStore.put(row.getPrimaryKey(), row.getValue()).join();
     }
 
@@ -132,6 +138,12 @@ public final class RaftStoreInstancePart implements StoreInstance {
         if (!stateMachine.isEnable()) {
             throw new UnsupportedOperationException("State machine not available");
         }
+
+        log.info("Upsert row key value, id: {}, part: {}, key: {}",
+            id.toString(),
+            part,
+            primaryKey == null ? "null" : Arrays.toString(primaryKey)
+            );
         return raftStore.put(primaryKey, row).join();
     }
 
@@ -140,6 +152,14 @@ public final class RaftStoreInstancePart implements StoreInstance {
         if (!stateMachine.isEnable()) {
             throw new UnsupportedOperationException("State machine not available");
         }
+
+        rows.forEach(x -> {
+            log.info("Upsert batch row key value, id: {}, part: {}, key: {}",
+                id.toString(),
+                part,
+                x.getPrimaryKey() == null ? "null" : Arrays.toString(x.getPrimaryKey()));
+            });
+
         return raftStore.put(rows.stream()
             .filter(Objects::nonNull)
             .map(row -> new ByteArrayEntry(row.getPrimaryKey(), row.getValue()))
@@ -152,6 +172,11 @@ public final class RaftStoreInstancePart implements StoreInstance {
         if (!stateMachine.isEnable()) {
             throw new UnsupportedOperationException("State machine not available");
         }
+
+        log.info("get value by row key value, id: {}, part: {}, key: {}",
+            id.toString(),
+            part,
+            primaryKey == null ? "null" : Arrays.toString(primaryKey));
         return raftStore.get(primaryKey).join();
     }
 
@@ -160,6 +185,13 @@ public final class RaftStoreInstancePart implements StoreInstance {
         if (!stateMachine.isEnable()) {
             throw new UnsupportedOperationException("State machine not available");
         }
+
+        primaryKeys.stream().forEach(x -> {
+            log.info("Get batch row key value, id: {}, part: {}, key: {}",
+                id.toString(),
+                part,
+                x == null ? "null" : Arrays.toString(x));
+        });
         return raftStore.get(primaryKeys).join().stream()
             .filter(Objects::nonNull)
             .map(e -> new KeyValue(e.getKey(), e.getValue())).collect(Collectors.toList());

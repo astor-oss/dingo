@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation group: 'com.beust', name: 'jcommander', version: 'jcommander'.v()
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: 'rocksdb'.v()
     implementation project(':dingo-driver-client')
     implementation project(':dingo-sdk')
 }
