@@ -40,19 +40,31 @@ public class ClientBase {
 
     public ClientBase(String coordinatorExchangeSvrList) {
         this.coordinatorExchangeSvrList = coordinatorExchangeSvrList;
-    }
-
-    public void initConnection() throws Exception {
         try {
-            // connection string mode
-            List<String> servers = Arrays.asList(coordinatorExchangeSvrList.split(","));
+            this.netService = ServiceLoader.load(NetServiceProvider.class).iterator().next().get();
 
+            List<String> servers = Arrays.asList(coordinatorExchangeSvrList.split(","));
             List<Location> addrList = servers.stream()
                 .map(s -> s.split(":"))
                 .map(ss -> new Location(ss[0], Integer.parseInt(ss[1])))
                 .collect(Collectors.toList());
             this.coordinatorConnector = new CoordinatorConnector(addrList);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void initConnection() throws Exception {
+        try {
+            // connection string mode
             this.netService = ServiceLoader.load(NetServiceProvider.class).iterator().next().get();
+
+            List<String> servers = Arrays.asList(coordinatorExchangeSvrList.split(","));
+            List<Location> addrList = servers.stream()
+                .map(s -> s.split(":"))
+                .map(ss -> new Location(ss[0], Integer.parseInt(ss[1])))
+                .collect(Collectors.toList());
+            this.coordinatorConnector = new CoordinatorConnector(addrList);
         } catch (Exception ex) {
             log.error("Failed to initialize connection: {}", coordinatorExchangeSvrList, ex);
             throw ex;

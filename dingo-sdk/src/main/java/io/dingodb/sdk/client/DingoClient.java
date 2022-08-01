@@ -17,23 +17,38 @@
 package io.dingodb.sdk.client;
 
 import io.dingodb.common.CommonId;
+import io.dingodb.common.Location;
+import io.dingodb.common.codec.KeyValueCodec;
+import io.dingodb.common.partition.PartitionStrategy;
+import io.dingodb.common.partition.RangeStrategy;
 import io.dingodb.common.store.KeyValue;
+import io.dingodb.common.table.AvroKeyValueCodec;
+import io.dingodb.common.table.DingoKeyValueCodec;
+import io.dingodb.common.table.TableDefinition;
+import io.dingodb.common.util.ByteArrayUtils;
+import io.dingodb.meta.Part;
 import io.dingodb.net.api.ApiRegistry;
 import io.dingodb.server.api.ExecutorApi;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 @Slf4j
 public class DingoClient extends ClientBase {
-
-    /**
-     * Connection to Dingo Cluster.
-     */
-    private DingoConnection connection;
+    private MetaClient metaClient;
 
     private ApiRegistry apiRegistry;
+    private CommonId tableId;
+    private KeyValueCodec codec;
+    private NavigableMap<ByteArrayUtils.ComparableByteArray, Part> parts;
+    private NavigableMap<ByteArrayUtils.ComparableByteArray, ExecutorApi> partsApi;
+    private PartitionStrategy<ByteArrayUtils.ComparableByteArray> ps;
 
     /**
      * Operation Utils.
@@ -50,8 +65,10 @@ public class DingoClient extends ClientBase {
 
     public DingoClient(String coordinatorExchangeSvrList, Integer retryTimes) {
         super(coordinatorExchangeSvrList);
-        connection = new DingoConnection(coordinatorExchangeSvrList);
+        this.metaClient = new MetaClient(coordinatorExchangeSvrList);
+        this.apiRegistry = super.getNetService().apiRegistry();
         this.retryTimes = retryTimes;
+        refreshTableMeta("HUZX");
     }
 
     /**
@@ -59,15 +76,14 @@ public class DingoClient extends ClientBase {
      * @return true or false
      */
     public boolean openConnection() {
+        /*
         try {
             if (isConnected()) {
                 return true;
             } else {
                 super.initConnection();
+                this.metaClient.init(null);
                 this.apiRegistry = super.getNetService().apiRegistry();
-
-                connection.initConnection();
-                storeOpUtils = new StoreOperationUtils(connection, retryTimes);
                 isConnectionInit = true;
             }
             return true;
@@ -75,10 +91,12 @@ public class DingoClient extends ClientBase {
             log.error("init connection failed", e.toString(), e);
             return false;
         }
+         */
+        return true;
     }
 
     public boolean isConnected() {
-        return isConnectionInit;
+        return true;
     }
 
     public void closeConnection() {
@@ -99,27 +117,54 @@ public class DingoClient extends ClientBase {
         }
 
         int retryTimes = 0;
+        int batchSize = 10000;
         boolean isSuccess = false;
         do {
-            RouteTable routeTable = storeOpUtils.getAndRefreshRouteTable(tableName, retryTimes > 0);
-            CommonId tableId = routeTable.getTableId();
+            refreshTableMeta(tableName);
             List<KeyValue> keyValueList = new ArrayList<>();
             ApiRegistry apiRegistry = this.apiRegistry;
             try {
+                /*
                 for (Object[] row : records) {
-                    KeyValue keyValueEncode = routeTable.getCodec().encode(row);
+                    KeyValue keyValueEncode = codec.encode(row);
                     keyValueList.add(keyValueEncode);
                 }
                 if (retryTimes == 0) {
                     KeyValue firstKeyValue = keyValueList.get(0);
-                    ExecutorApi executorApi = routeTable.getExecutorAPI(apiRegistry, firstKeyValue.getKey());
+                    ByteArrayUtils.ComparableByteArray keyId = ps.calcPartId(firstKeyValue.getKey());
+                    ExecutorApi executorApi = getExecutor(keyId);
                     isSuccess = executorApi.upsertKeyValue(tableId, keyValueList);
                 } else {
                     for (KeyValue keyValue : keyValueList) {
-                        ExecutorApi executorApi = routeTable.getExecutorAPI(apiRegistry, keyValue.getKey());
+                        ByteArrayUtils.ComparableByteArray keyId = ps.calcPartId(keyValue.getKey());
+                        ExecutorApi executorApi = getExecutor(keyId);
                         isSuccess = executorApi.upsertKeyValue(tableId, keyValue);
                     }
                 }
+                 */
+
+                Map<ByteArrayUtils.ComparableByteArray, List<KeyValue>> recordGroup = new HashMap<ByteArrayUtils.ComparableByteArray, List<KeyValue>>();
+                for (Object[] record : records) {
+                    KeyValue keyValue = codec.encode(record);
+                    ByteArrayUtils.ComparableByteArray keyId = ps.calcPartId(keyValue.getKey());
+                    List<KeyValue> currentGroup;
+                    currentGroup = recordGroup.get(keyId);
+                    if (currentGroup == null) {
+                        currentGroup = new ArrayList<KeyValue>();
+                        recordGroup.put(keyId, currentGroup);
+                    }
+                    currentGroup.add(keyValue);
+                    if (currentGroup.size() >= batchSize) {
+                        getExecutor(keyId).upsertKeyValue(tableId, currentGroup);
+                        currentGroup.clear();
+                    }
+                }
+                for (Map.Entry<ByteArrayUtils.ComparableByteArray, List<KeyValue>> entry : recordGroup.entrySet()) {
+                    if (entry.getValue().size() > 0) {
+                        getExecutor(entry.getKey()).upsertKeyValue(tableId, entry.getValue());
+                    }
+                }
+                isSuccess = true;
             } catch (Exception ex) {
                 log.error("insert failed:{}", ex.toString(), ex);
                 isSuccess = false;
@@ -128,6 +173,36 @@ public class DingoClient extends ClientBase {
 
         return isSuccess;
     }
+
+    public void refreshTableMeta(String tableName) {
+        this.tableId = metaClient.getTableId(tableName);
+        TableDefinition tableDefinition = metaClient.getTableDefinition(tableName);
+        if (tableDefinition == null) {
+            System.out.printf("Table:%s not found \n", tableName);
+            System.exit(1);
+        }
+        this.parts = metaClient.getParts(tableName);
+        this.codec = new DingoKeyValueCodec(tableDefinition.getDingoType(), tableDefinition.getKeyMapping());
+        this.ps = new RangeStrategy(tableDefinition, parts.navigableKeySet());
+        this.partsApi = new TreeMap<ByteArrayUtils.ComparableByteArray, ExecutorApi>();
+    }
+
+    private ExecutorApi getExecutor(ByteArrayUtils.ComparableByteArray byteArray) {
+        ExecutorApi executorApi = partsApi.get(byteArray);
+        if (executorApi != null) {
+            return executorApi;
+        }
+        Part part = parts.get(byteArray);
+        ExecutorApi executor = apiRegistry
+            .proxy(ExecutorApi.class, () -> new Location(part.getLeader().getHost(), part.getLeader().getPort()));
+        partsApi.put(byteArray, executor);
+        return executor;
+    }
+
+    public MetaClient getMetaClient() {
+        return metaClient;
+    }
+
 
     /*
     private HashMap<Key, Record> convertObjectArray2Record(String tableName, List<Object[]> recordList) {

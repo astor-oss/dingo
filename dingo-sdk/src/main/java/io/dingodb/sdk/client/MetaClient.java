@@ -32,6 +32,11 @@ public class MetaClient extends ClientBase implements MetaService {
 
     public MetaClient(String coordinatorExchangeSvrList) {
         super(coordinatorExchangeSvrList);
+        try {
+            metaServiceApi = super.getNetService().apiRegistry().proxy(MetaServiceApi.class, super.getCoordinatorConnector());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -41,9 +46,6 @@ public class MetaClient extends ClientBase implements MetaService {
 
     @Override
     public void init(@Nullable Map<String, Object> props) throws Exception {
-        super.initConnection();
-        metaServiceApi = super.getNetService()
-            .apiRegistry().proxy(MetaServiceApi.class, super.getCoordinatorConnector());
     }
 
     @Override
