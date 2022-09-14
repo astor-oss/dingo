@@ -1,0 +1,8 @@
+io.dingodb.sdk.annotation
+io.dingodb.sdk.client
+io.dingodb.sdk.common
+io.dingodb.sdk.configuration
+io.dingodb.sdk.mappers
+io.dingodb.sdk.operation
+io.dingodb.sdk.operation.impl
+io.dingodb.sdk.utils
