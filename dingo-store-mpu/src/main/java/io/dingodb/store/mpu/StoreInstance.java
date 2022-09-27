@@ -83,6 +83,7 @@ public class StoreInstance implements io.dingodb.store.api.StoreInstance {
 
     public void destroy() {
         core.destroy();
+        log.info("huzx=> will delete path:{}", path.toAbsolutePath().toString());
         FileUtils.deleteIfExists(path);
     }
 

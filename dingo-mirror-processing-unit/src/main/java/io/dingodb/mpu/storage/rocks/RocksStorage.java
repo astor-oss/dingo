@@ -27,39 +27,7 @@ import io.dingodb.mpu.instruction.Instruction;
 import io.dingodb.mpu.storage.Storage;
 import io.dingodb.net.service.FileTransferService;
 import lombok.extern.slf4j.Slf4j;
-import org.rocksdb.AbstractEventListener;
-import org.rocksdb.BackgroundErrorReason;
-import org.rocksdb.BackupEngine;
-import org.rocksdb.BackupEngineOptions;
-import org.rocksdb.BlockBasedTableConfig;
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.ColumnFamilyOptions;
-import org.rocksdb.CompactionJobInfo;
-import org.rocksdb.ConfigOptions;
-import org.rocksdb.DBOptions;
-import org.rocksdb.FileOperationInfo;
-import org.rocksdb.FlushJobInfo;
-import org.rocksdb.FlushOptions;
-import org.rocksdb.MemTableInfo;
-import org.rocksdb.OptionsUtil;
-import org.rocksdb.Range;
-import org.rocksdb.ReadOptions;
-import org.rocksdb.RestoreOptions;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksIterator;
-import org.rocksdb.SizeApproximationFlag;
-import org.rocksdb.Slice;
-import org.rocksdb.Snapshot;
-import org.rocksdb.Status;
-import org.rocksdb.StringAppendOperator;
-import org.rocksdb.TableFileCreationBriefInfo;
-import org.rocksdb.TableFileCreationInfo;
-import org.rocksdb.TableFileDeletionInfo;
-import org.rocksdb.WriteBatch;
-import org.rocksdb.WriteOptions;
-import org.rocksdb.WriteStallInfo;
+import org.rocksdb.*;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -233,11 +201,13 @@ public class RocksStorage implements Storage {
     @Override
     public void destroy() {
         destroy = true;
+        this.writeOptions.close();
         closeDB();
         this.instruction.close();
         this.icfHandler.close();
         this.backup.close();
         FileUtils.deleteIfExists(path);
+        log.info("huzx=>receive destroy database operation on path:{}", path.toString());
     }
 
     @Override
@@ -482,8 +452,17 @@ public class RocksStorage implements Storage {
          * configuration for performance.
          * write_buffer_size: will control the sst file size
          */
-        cfOption.setWriteBufferSize(512  * 1024 * 1024);
-        cfOption.setMaxWriteBufferNumber(4);
+        final long blockSize = 128L * 1024;
+        final long targetFileSize = 256L * 1024 * 1024;
+        cfOption.setMaxWriteBufferNumber(6);
+        cfOption.setMinWriteBufferNumberToMerge(3);
+        cfOption.setTargetFileSizeBase(targetFileSize);
+        cfOption.setMaxBytesForLevelBase(4L * targetFileSize);
+        cfOption.setWriteBufferSize(512L * 1024 * 1024);
+        BlockBasedTableConfig table_options = new BlockBasedTableConfig();
+        table_options.setBlockSize(blockSize);
+        table_options.setBlockCacheSize(256L * 1024 * 1024);
+        cfOption.setTableFormatConfig(table_options);
         return new ColumnFamilyDescriptor(CF_DEFAULT, cfOption);
     }
 
