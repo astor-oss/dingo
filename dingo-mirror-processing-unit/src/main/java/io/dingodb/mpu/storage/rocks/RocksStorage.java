@@ -60,12 +60,10 @@ import org.rocksdb.StringAppendOperator;
 import org.rocksdb.TableFileCreationBriefInfo;
 import org.rocksdb.TableFileCreationInfo;
 import org.rocksdb.TableFileDeletionInfo;
-import org.rocksdb.TtlDB;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.rocksdb.WriteStallInfo;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -82,7 +80,6 @@ import static io.dingodb.mpu.Constant.CF_DEFAULT;
 import static io.dingodb.mpu.Constant.CF_META;
 import static io.dingodb.mpu.Constant.CLOCK_K;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rocksdb.SizeApproximationFlag.INCLUDE_FILES;
 import static org.rocksdb.SizeApproximationFlag.INCLUDE_MEMTABLES;
 
@@ -213,6 +210,7 @@ public class RocksStorage implements Storage {
 
         RocksDB db;
         List<ColumnFamilyHandle> handles = new ArrayList<>(4);
+        /*
         if (RocksUtils.ttlValid(this.ttl)) {
             List<Integer> ttlList = new ArrayList<>();
             ttlList.add(this.ttl);
@@ -223,6 +221,8 @@ public class RocksStorage implements Storage {
         } else {
             db = RocksDB.open(options, this.dbPath.toString(), cfs, handles);
         }
+       */
+        db = RocksDB.open(options, this.dbPath.toString(), cfs, handles);
         log.info("RocksStorage createDB, RocksDB open, path: {}, options file: {}, handles size: {}, ttl: {}.",
             this.dbPath, this.dbRocksOptionsFile, handles.size(), this.ttl);
         this.dcfHandler = handles.get(0);
@@ -231,6 +231,7 @@ public class RocksStorage implements Storage {
     }
 
     private boolean loadDBOptions(final String optionsFile, DBOptions options) {
+        /*
         try {
             if (optionsFile == null || !(new File(optionsFile)).exists()) {
                 log.info("loadDBOptions, rocksdb options file not found: {}, use default options.", optionsFile);
@@ -242,6 +243,8 @@ public class RocksStorage implements Storage {
             log.warn("loadDBOptions, load {} exception, use default options.", optionsFile, dbException);
             return false;
         }
+        */
+        return true;
     }
 
     public void closeDB() {
