@@ -193,6 +193,13 @@ public class RocksStorage implements Storage {
         options.setCreateMissingColumnFamilies(true);
         options.setWalDir(this.dbPath.resolve("wal").toString());
 
+        options.setMaxBackgroundJobs(32);
+        options.setMaxSubcompactions(16);
+        options.setMaxBackgroundCompactions(16);
+        options.setBytesPerSync(8388608L);
+        options.setDbWriteBufferSize(2147483648L);
+        options.setWalBytesPerSync(1048576L);
+
         /**
          * configuration for performance.
          * 1. max_background_compaction
@@ -536,7 +543,7 @@ public class RocksStorage implements Storage {
         final long targetFileSize = 256L * 1024 * 1024;
         cfOption.setMaxWriteBufferNumber(5);
         cfOption.setWriteBufferSize(targetFileSize);
-        cfOption.setMaxBytesForLevelBase(1L * 1024 * 1024 * 1024);
+        cfOption.setMaxBytesForLevelBase(640L * 1024 * 1024);
         cfOption.setTargetFileSizeBase(64L * 1024 * 1024);
         cfOption.setMinWriteBufferNumberToMerge(1);
 
